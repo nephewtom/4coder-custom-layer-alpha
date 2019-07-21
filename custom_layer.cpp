@@ -59,6 +59,7 @@ void custom_keys(Bind_Helper *context) {
     bind(context, key_mouse_wheel, MDFR_NONE, mouse_wheel_scroll);
     bind(context, key_mouse_wheel, MDFR_CTRL, mouse_wheel_change_face_size);
     end_map(context);
+    
     begin_map(context, mapid_file);
     bind_vanilla_keys(context, write_character);
     bind(context, key_mouse_left, MDFR_NONE, click_set_cursor_and_mark);
@@ -139,6 +140,7 @@ void custom_keys(Bind_Helper *context) {
     bind(context, '>', MDFR_CTRL, view_jump_list_with_lister);
     bind(context, ' ', MDFR_SHIFT, write_character);
     end_map(context);
+    
     begin_map(context, default_code_map);
     inherit_map(context, mapid_file);
     bind(context, key_left, MDFR_CTRL, seek_alphanumeric_or_camel_left);
@@ -173,6 +175,7 @@ void custom_keys(Bind_Helper *context) {
     bind(context, '2', MDFR_ALT, open_matching_file_cpp);
     bind(context, '0', MDFR_CTRL, write_zero_struct);
     end_map(context);
+    
     begin_map(context, default_lister_ui_map);
     bind_vanilla_keys(context, lister__write_character);
     bind(context, key_esc, MDFR_NONE, lister__quit);
