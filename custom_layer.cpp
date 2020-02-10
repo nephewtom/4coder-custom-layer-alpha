@@ -16,23 +16,149 @@ n*/
 
 #if !defined(NO_BINDING)
 
-CUSTOM_COMMAND_SIG( hello ) {
-    print_message( app, "Hello Dave.", sizeof( "Hello Dave." ) - 1 );
+
+
+
+void paste_clipboard_index(Application_Links* app, int clip_index)
+{
+    View_Summary view = get_active_view(app, AccessOpen);
+    
+    int32_t len = clipboard_index(app, 0, clip_index, 0, 0);
+    char *str = 0;
+    
+    if (len <= app->memory_size)
+        str = (char*)app->memory;
+    
+    if (str != 0)
+    {
+        clipboard_index(app, 0, clip_index, str, len);
+        
+        Buffer_Summary buffer = get_buffer(app, view.buffer_id, AccessOpen);
+		int32_t pos = view.cursor.pos;
+        
+        buffer_replace_range(app, &buffer, pos, pos, str, len);
+        view_set_cursor(app, &view, seek_pos(pos + len), true);
+        
+        Theme_Color paste = {};
+        paste.tag = Stag_Paste;
+        get_theme_colors(app, &paste, 1);
+        view_post_fade(app, &view, 0.667f, pos, pos + len, paste.color);
+        
+        auto_tab_range(app);
+    }
+}
+
+static void
+activate_clipboard_lister(Application_Links *app, Partition *scratch, Heap *heap,
+                          View_Summary *view, Lister_State *state,
+                          String text_field, void *user_data, bool32 activated_by_mouse)
+{
+    lister_default(app, scratch, heap, view, state, ListerActivation_Finished);
+    int clip_index = (int) PtrAsInt(user_data);
+    paste_clipboard_index(app, clip_index);
+}
+
+CUSTOM_COMMAND_SIG(clipmate_lister)
+{
+    Partition* arena = &global_part;
+    Temp_Memory temp = begin_temp_memory(arena);
+    
+    View_Summary view = get_active_view(app, AccessOpen);
+    view_end_ui_mode(app, &view);
+    
+    int32_t option_count = clipboard_count(app, 0);
+    if (option_count > 10)
+        option_count = 10;
+    
+    Lister_Option* options = push_array(arena, Lister_Option, option_count);
+    for (int32_t i = 0; i < option_count; i++)
+    {
+        int32_t contents_length = clipboard_index(app, 0, i, 0, 0);
+        
+		char* str_index = push_array(arena, char, 5);
+		itoa(i, str_index, 10);
+        
+        char* clipboard_contents = push_array(arena, char, contents_length);
+        clipboard_index(app, 0, i, clipboard_contents, contents_length);
+        
+        options[i].string = make_string(str_index, (int) strlen(str_index));
+        options[i].status = make_string(clipboard_contents, contents_length);
+        options[i].user_data = IntAsPtr(i);
+    }
+    
+    begin_integrated_lister__basic_list(app, "Clipboard:", activate_clipboard_lister, 0, 0, options, option_count, 0, &view);
+    
+    end_temp_memory(temp);
+}
+
+
+CUSTOM_COMMAND_SIG(f2_cut) {
+    exec_command(app, seek_beginning_of_line);
+    exec_command(app, set_mark);
+    exec_command(app, seek_end_of_line);
+    exec_command(app, cut);
+    exec_command(app, delete_char);
+}
+
+CUSTOM_COMMAND_SIG(f3_copy) {
+    exec_command(app, seek_beginning_of_line);
+    exec_command(app, set_mark);
+    exec_command(app, seek_end_of_line);
+    exec_command(app, copy);
+    exec_command(app, seek_beginning_of_line);
+    exec_command(app, move_down);
+}
+
+CUSTOM_COMMAND_SIG(f4_paste) {
+    exec_command(app, paste);
+    write_string(app, make_lit_string( "\n" ));
+}
+
+CUSTOM_COMMAND_SIG(match_brace) {
+    // It does not work as I expected...
+    exec_command(app, select_surrounding_scope);
+    exec_command(app, cursor_mark_swap);
+}
+
+CUSTOM_COMMAND_SIG(insert_newline_above)
+CUSTOM_DOC( "Insert a new line above the current line." )
+{
+    exec_command(app, move_up);
+    exec_command(app, seek_end_of_line);
+    write_string(app, make_lit_string( "\n" ));
+}
+
+CUSTOM_COMMAND_SIG(insert_newline_below)
+CUSTOM_DOC( "Insert a new line below the current line." )
+{
+    exec_command(app, seek_end_of_line);
+    write_string(app, make_lit_string( "\n" ));
 }
 
 void custom_keys(Bind_Helper *context) {
     
     begin_map(context, mapid_global);
-    bind(context, 'h', MDFR_ALT, hello);
-    
+
+    // Original Emacs-like movement
     bind(context, 'p', MDFR_CTRL, move_up);
     bind(context, 'n', MDFR_CTRL, move_down);
-    bind(context, 'w', MDFR_CTRL, kill_buffer);
-    bind(context, '\t', MDFR_CTRL, change_active_panel);
-    bind(context, '3', MDFR_ALT, open_panel_hsplit);
-    bind(context, '2', MDFR_ALT, open_panel_vsplit);
-    bind(context, '0', MDFR_ALT, close_panel);
-    
+    bind(context, 'f', MDFR_CTRL, move_right);
+    bind(context, 'b', MDFR_CTRL, move_left);
+
+    // Tom Emacs movement
+    bind(context, 'p', MDFR_ALT, seek_whitespace_up_end_line);
+    bind(context, 'n', MDFR_ALT, seek_whitespace_down_end_line);
+    bind(context, 'f', MDFR_ALT, seek_alphanumeric_or_camel_right);
+    bind(context, 'b', MDFR_ALT, seek_alphanumeric_or_camel_left);
+
+    // Tom Emacs favorite
+    bind(context, 'w', MDFR_CTRL, kill_buffer); // Original Emacs: C-x k
+    bind(context, '\t', MDFR_CTRL, change_active_panel); // Original Emacs: C-x o 
+    bind(context, '2', MDFR_ALT, open_panel_vsplit); // Original Emacs: C-x 2
+    bind(context, '3', MDFR_ALT, open_panel_hsplit); // Original Emacs: C-x 3
+    bind(context, '0', MDFR_ALT, close_panel); // Original Emacs: C-x 0
+
+    // 4coder defaults (some commented by me)
     bind(context, ',', MDFR_CTRL, change_active_panel);
     bind(context, '<', MDFR_CTRL, change_active_panel_backwards);
     bind(context, 'N', MDFR_CTRL, interactive_new);
@@ -41,11 +167,14 @@ void custom_keys(Bind_Helper *context) {
     // bind(context, 'k', MDFR_CTRL, interactive_kill_buffer);
     bind(context, 'i', MDFR_CTRL, interactive_switch_buffer);
     bind(context, 'h', MDFR_CTRL, project_go_to_root_directory);
-    bind(context, 'S', MDFR_CTRL, save_all_dirty_buffers);
+    bind(context, 'S', MDFR_CTRL, save);
+    bind(context, 's', MDFR_CTRL | MDFR_ALT, save_all_dirty_buffers);
     bind(context, '.', MDFR_ALT, change_to_build_panel);
     bind(context, ',', MDFR_ALT, close_build_panel);
-    bind(context, 'n', MDFR_ALT, goto_next_jump_sticky);
-    bind(context, 'N', MDFR_ALT, goto_prev_jump_sticky);
+    bind(context, 's', MDFR_ALT, goto_next_jump_sticky);
+    bind(context, 'S', MDFR_ALT, goto_prev_jump_sticky);
+    // bind(context, 'n', MDFR_ALT, goto_next_jump_sticky);
+    // bind(context, 'N', MDFR_ALT, goto_prev_jump_sticky);
     bind(context, 'M', MDFR_ALT, goto_first_jump_sticky);
     bind(context, 'm', MDFR_ALT, build_in_build_panel);
     //bind(context, 'b', MDFR_ALT, toggle_filebar);
