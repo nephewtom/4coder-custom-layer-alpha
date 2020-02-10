@@ -184,15 +184,17 @@ void custom_keys(Bind_Helper *context) {
     bind(context, 'X', MDFR_ALT, project_command_lister);
     bind(context, 'I', MDFR_CTRL, list_all_functions_all_buffers_lister);
     //bind(context, 'E', MDFR_ALT, exit_4coder);
+
+    // Function keys: 4coder default + Tom favorites
     bind(context, key_f1, MDFR_NONE, project_fkey_command);
-    bind(context, key_f2, MDFR_NONE, cut);
-    bind(context, key_f3, MDFR_NONE, copy);
-    bind(context, key_f4, MDFR_NONE, paste);
+    bind(context, key_f2, MDFR_NONE, f2_cut);
+    bind(context, key_f3, MDFR_NONE, f3_copy);
+    bind(context, key_f4, MDFR_NONE, f4_paste);
     bind(context, key_f4, MDFR_ALT, exit_4coder);
     bind(context, key_f5, MDFR_NONE, project_fkey_command);
     bind(context, key_f6, MDFR_NONE, project_fkey_command);
     bind(context, key_f7, MDFR_NONE, project_fkey_command);
-    bind(context, key_f8, MDFR_NONE, project_fkey_command);
+    bind(context, key_f8, MDFR_NONE, interactive_switch_buffer);
     bind(context, key_f9, MDFR_NONE, toggle_filebar);
     bind(context, key_f10, MDFR_NONE, project_fkey_command);
     bind(context, key_f11, MDFR_NONE, project_fkey_command);
@@ -203,12 +205,17 @@ void custom_keys(Bind_Helper *context) {
     bind(context, key_f16, MDFR_NONE, move_down);
     bind(context, key_mouse_wheel, MDFR_NONE, mouse_wheel_scroll);
     bind(context, key_mouse_wheel, MDFR_CTRL, mouse_wheel_change_face_size);
+        
+    bind(context, '\n', MDFR_CTRL | MDFR_SHIFT, insert_newline_above);
+    bind(context, '\n', MDFR_CTRL, insert_newline_below);
+    bind(context, '\n', MDFR_CTRL | MDFR_ALT, clipmate_lister);
+    bind(context, '=', MDFR_CTRL, increase_face_size);
+    bind(context, '-', MDFR_CTRL, decrease_face_size);
+    
     end_map(context);
     
     
     begin_map(context, mapid_file);
-    bind(context, 'p', MDFR_ALT, seek_whitespace_up_end_line);
-    bind(context, 'n', MDFR_ALT, seek_whitespace_down_end_line);
     bind(context, '\t', MDFR_CTRL, change_active_panel);
     
     bind_vanilla_keys(context, write_character);
@@ -231,17 +238,18 @@ void custom_keys(Bind_Helper *context) {
     bind(context, key_right, MDFR_NONE, move_right);
     bind(context, key_right, MDFR_SHIFT, move_right);
     
-    // Emacs movement style
+    // Original Emacs 
     bind(context, 'a', MDFR_CTRL, seek_beginning_of_line);
     bind(context, 'e', MDFR_CTRL, seek_end_of_line);
+    bind(context, '<', MDFR_ALT, goto_beginning_of_file);
+    bind(context, '>', MDFR_ALT, goto_end_of_file);
     
     bind(context, key_home, MDFR_NONE, seek_beginning_of_line);
     bind(context, key_home, MDFR_SHIFT, seek_beginning_of_line);
     bind(context, key_home, MDFR_CTRL, goto_beginning_of_file);
     bind(context, key_end, MDFR_NONE, seek_end_of_line);
     bind(context, key_end, MDFR_SHIFT, seek_end_of_line);
-    bind(context, key_end, MDFR_CTRL, goto_end_of_file);
-    
+    bind(context, key_end, MDFR_CTRL, goto_end_of_file);    
     bind(context, key_page_up, MDFR_NONE, page_up);
     bind(context, key_page_up, MDFR_SHIFT, page_up);
     bind(context, key_page_up, MDFR_CTRL, goto_beginning_of_file);
@@ -250,8 +258,7 @@ void custom_keys(Bind_Helper *context) {
     bind(context, key_page_down, MDFR_SHIFT, page_down);
     bind(context, key_page_down, MDFR_CTRL, goto_end_of_file);
     bind(context, key_page_down, MDFR_CTRL|MDFR_SHIFT, goto_end_of_file);
-    
-    
+        
     bind(context, key_up, MDFR_CTRL, seek_whitespace_up_end_line);
     bind(context, key_up, MDFR_CTRL|MDFR_SHIFT, seek_whitespace_up_end_line);
     bind(context, key_down, MDFR_CTRL, seek_whitespace_down_end_line);
@@ -260,40 +267,40 @@ void custom_keys(Bind_Helper *context) {
     bind(context, key_left, MDFR_CTRL|MDFR_SHIFT, seek_whitespace_left);
     bind(context, key_right, MDFR_CTRL, seek_whitespace_right);
     bind(context, key_right, MDFR_CTRL|MDFR_SHIFT, seek_whitespace_right);
-    
     bind(context, key_up, MDFR_ALT, move_line_up);
     bind(context, key_down, MDFR_ALT, move_line_down);
-    
     bind(context, key_back, MDFR_CTRL, backspace_word);
     bind(context, key_del, MDFR_CTRL, delete_word);
-    bind(context, 'd', MDFR_ALT, delete_word);
     bind(context, key_back, MDFR_ALT, snipe_token_or_word);
     bind(context, key_del, MDFR_ALT, snipe_token_or_word_right);
+
+    // Original Emacs
+    bind(context, 'd', MDFR_CTRL, delete_char);
+    bind(context, 'd', MDFR_ALT, delete_word);
+    bind(context, 'k', MDFR_CTRL, delete_line); // not exactly as C-k
+    bind(context, 's', MDFR_CTRL, search);
+    
+    // Tom Modified
+    bind(context, 'R', MDFR_CTRL, replace_in_range);
+    bind(context, key_f5, MDFR_NONE, replace_in_range);
+    bind(context, 'D', MDFR_CTRL, delete_range);
+    bind(context, key_f8, MDFR_CTRL, center_view);
+    bind(context, 'l', MDFR_CTRL, duplicate_line);
+    bind(context, 'g', MDFR_ALT, goto_line);
     
     bind(context, ' ', MDFR_CTRL, set_mark);
-    bind(context, key_f5, MDFR_NONE, replace_in_range);
     bind(context, 'c', MDFR_CTRL, copy);
-    bind(context, 'd', MDFR_CTRL, delete_range);
-    bind(context, 'D', MDFR_CTRL, delete_line);
-    bind(context, 'k', MDFR_CTRL, delete_line);
-    bind(context, key_f8, MDFR_CTRL, center_view);
     bind(context, 'E', MDFR_CTRL, left_adjust_view);
-    
-    bind(context, 'f', MDFR_CTRL, search);
     bind(context, 'F', MDFR_CTRL, list_all_locations);
     bind(context, 'F', MDFR_ALT, list_all_substring_locations_case_insensitive);
-    bind(context, 'g', MDFR_ALT, goto_line);
     bind(context, 'G', MDFR_CTRL, list_all_locations_of_selection);
     bind(context, 'j', MDFR_CTRL, snippet_lister);
-    //bind(context, 'K', MDFR_CTRL, kill_buffer);
-    bind(context, 'l', MDFR_CTRL, duplicate_line);
     bind(context, 'm', MDFR_CTRL, cursor_mark_swap);
     bind(context, 'O', MDFR_CTRL, reopen);
     bind(context, 'q', MDFR_CTRL, query_replace);
     bind(context, 'Q', MDFR_CTRL, query_replace_identifier);
     bind(context, 'q', MDFR_ALT, query_replace_selection);
     bind(context, 'r', MDFR_CTRL, reverse_search);
-    bind(context, 's', MDFR_CTRL, save);
     bind(context, 't', MDFR_CTRL, search_identifier);
     bind(context, 'T', MDFR_CTRL, list_all_locations_of_identifier);
     bind(context, 'v', MDFR_CTRL, paste_and_indent);
@@ -313,6 +320,9 @@ void custom_keys(Bind_Helper *context) {
     inherit_map(context, mapid_file);
     bind(context, key_left, MDFR_CTRL, seek_alphanumeric_or_camel_left);
     bind(context, key_right, MDFR_CTRL, seek_alphanumeric_or_camel_right);
+
+    // Eclipse-like
+    bind(context, 'P', MDFR_CTRL, match_brace);
     
     // Emacs movement style
     bind(context, 'b', MDFR_ALT, seek_alphanumeric_or_camel_left);
@@ -336,7 +346,7 @@ void custom_keys(Bind_Helper *context) {
     bind(context, 't', MDFR_ALT, write_todo);
     bind(context, 'y', MDFR_ALT, write_note);
     
-    // Disabled... not sure why...
+    // Disabled to use delete_range command
     //bind(context, 'D', MDFR_ALT, list_all_locations_of_type_definition);
     bind(context, 'T', MDFR_ALT, list_all_locations_of_type_definition_of_identifier);
     bind(context, '[', MDFR_CTRL, open_long_braces);
@@ -366,16 +376,17 @@ void custom_keys(Bind_Helper *context) {
     bind(context, '\n', MDFR_NONE, lister__activate);
     bind(context, '\t', MDFR_NONE, lister__activate);
     bind(context, key_back, MDFR_NONE, lister__backspace_text_field);
-    //bind(context, '.', MDFR_NONE, lister__backspace_text_field);
-    
+    //bind(context, '.', MDFR_NONE, lister__backspace_text_field);    
     bind(context, key_up, MDFR_NONE, lister__move_up);
-    bind(context, 'p', MDFR_CTRL, lister__move_up);
-    //bind(context, 'k', MDFR_ALT, lister__move_up);
-    bind(context, key_page_up, MDFR_NONE, lister__move_up);
-    
-    bind(context, key_down, MDFR_NONE, lister__move_down);
+
+    // Emacs-like
+    bind(context, 'p', MDFR_CTRL, lister__move_up); 
     bind(context, 'n', MDFR_CTRL, lister__move_down);
+    //bind(context, 'k', MDFR_ALT, lister__move_up);
     //bind(context, 'j', MDFR_ALT, lister__move_down);
+
+    bind(context, key_page_up, MDFR_NONE, lister__move_up);
+    bind(context, key_down, MDFR_NONE, lister__move_down);
     bind(context, key_page_down, MDFR_NONE, lister__move_down);
     
     bind(context, key_mouse_wheel, MDFR_NONE, lister__wheel_scroll);
